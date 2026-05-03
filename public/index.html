@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MediTreat</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',sans-serif}
+:root{--green:#1a7a4a;--green-light:#e6f4ed;--green-mid:#2ea06b;--blue:#1565c0;--blue-light:#e3f0fd;--amber:#b45309;--amber-light:#fef3c7;--red:#b91c1c;--red-light:#fee2e2;--gray:#64748b;--border:#e2e8f0;--bg:#f8fafc;--white:#fff;--text:#1e293b;--text2:#475569;--sidebar:220px;--header:56px}
+body{background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#e6f4ed 0%,#e3f0fd 100%)}
+.login-card{background:var(--white);border-radius:16px;padding:40px;width:380px;box-shadow:0 4px 24px rgba(0,0,0,.1)}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.login-logo .icon{width:40px;height:40px;background:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px}
+.login-logo h1{font-size:24px;font-weight:700;color:var(--green)}
+.login-card h2{font-size:18px;margin-bottom:6px}
+.login-card p{color:var(--gray);font-size:13px;margin-bottom:24px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text2)}
+.form-group input,.form-group select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;transition:.2s}
+.form-group input:focus,.form-group select:focus{border-color:var(--green)}
+.btn-primary{width:100%;padding:11px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:.2s}
+.btn-primary:hover{background:#155f3a}
+.login-tabs{display:flex;gap:8px;margin-bottom:20px}
+.tab-btn{flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;background:transparent;font-size:13px;cursor:pointer;transition:.2s}
+.tab-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* APP SHELL */
+#app{display:none;height:100vh;overflow:hidden;flex-direction:row}
+#app.visible{display:flex}
+.sidebar{width:var(--sidebar);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar-logo{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sidebar-logo .icon{width:32px;height:32px;background:var(--green);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px}
+.sidebar-logo span{font-weight:700;color:var(--green);font-size:16px}
+.nav-section{padding:12px 10px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;margin:2px 8px;cursor:pointer;font-size:14px;color:var(--text2);transition:.15s}
+.nav-item:hover{background:var(--bg)}
+.nav-item.active{background:var(--green-light);color:var(--green);font-weight:600}
+.nav-item .ic{font-size:16px;width:20px;text-align:center}
+.sidebar-bottom{margin-top:auto;padding:12px}
+.doctor-pill{display:flex;align-items:center;gap:8px;padding:10px;border-radius:8px;background:var(--bg)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:var(--header);background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0}
+.topbar h2{font-size:16px;font-weight:700;flex:1}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-amber{background:var(--amber-light);color:var(--amber)}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-blue{background:var(--blue-light);color:var(--blue)}
+.content{flex:1;overflow-y:auto;padding:24px}
+
+/* CARDS */
+.card{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:700;margin-bottom:14px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:16px}
+.stat-label{font-size:12px;color:var(--gray);margin-bottom:6px}
+.stat-val{font-size:26px;font-weight:700}
+.stat-sub{font-size:12px;color:var(--gray);margin-top:4px}
+
+/* QUEUE */
+.queue-grid{display:grid;grid-template-columns:1fr 320px;gap:16px}
+.queue-list{}
+.q-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;border:1px solid var(--border);margin-bottom:8px;background:var(--white);cursor:pointer;transition:.15s}
+.q-item:hover{border-color:var(--green);box-shadow:0 2px 8px rgba(26,122,74,.08)}
+.q-item.active-consult{border-left:4px solid var(--green);background:var(--green-light)}
+.q-num{width:32px;height:32px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.q-num.pending{background:var(--border);color:var(--gray)}
+.q-info{flex:1}
+.q-name{font-size:14px;font-weight:600}
+.q-detail{font-size:12px;color:var(--gray);margin-top:2px}
+.q-actions{display:flex;gap:6px}
+.btn-sm{padding:5px 12px;border-radius:6px;border:1.5px solid var(--border);background:transparent;font-size:12px;cursor:pointer;font-weight:600;transition:.15s}
+.btn-sm:hover{background:var(--bg)}
+.btn-sm.green{border-color:var(--green);color:var(--green)}
+.btn-sm.green:hover{background:var(--green-light)}
+.btn-sm.red{border-color:var(--red);color:var(--red)}
+
+/* PATIENT PANEL */
+.patient-panel{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px;position:sticky;top:0}
+.pp-avatar{width:56px;height:56px;border-radius:50%;background:var(--green);color:#fff;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.pp-name{text-align:center;font-size:16px;font-weight:700}
+.pp-sub{text-align:center;font-size:12px;color:var(--gray);margin-bottom:14px}
+.pp-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bg);font-size:13px}
+.pp-row span:first-child{color:var(--gray)}
+.ai-box{background:var(--green-light);border-radius:8px;padding:12px;margin:14px 0;font-size:13px;line-height:1.6;border-left:3px solid var(--green)}
+.ai-box b{color:var(--green)}
+.note-area{width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;resize:vertical;min-height:70px;outline:none;margin-bottom:8px}
+.note-area:focus{border-color:var(--green)}
+.btn-block{width:100%;padding:9px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;margin-bottom:6px}
+.btn-done{background:var(--green);color:#fff}
+.btn-done:hover{background:#155f3a}
+.btn-msg{background:var(--blue-light);color:var(--blue)}
+
+/* BOOKING PAGE */
+.booking-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.booking-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px}
+.booking-card .bname{font-size:14px;font-weight:700}
+.booking-card .btime{font-size:13px;color:var(--gray);margin:4px 0}
+.payment-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;margin-top:6px}
+.paid{background:#dcfce7;color:#166534}
+.pending-pay{background:#fef9c3;color:#854d0e}
+
+/* PATIENTS PAGE */
+.patients-table{width:100%;border-collapse:collapse;font-size:14px}
+.patients-table th{text-align:left;padding:10px 14px;background:var(--bg);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)}
+.patients-table td{padding:10px 14px;border-bottom:1px solid var(--border)}
+.patients-table tr:hover td{background:var(--bg)}
+
+/* ANALYTICS */
+.chart-bar-wrap{margin-top:12px}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px}
+.bar-label{width:80px;text-align:right;color:var(--gray)}
+.bar-track{flex:1;background:var(--bg);border-radius:6px;height:18px;overflow:hidden}
+.bar-fill{height:100%;border-radius:6px;background:var(--green);transition:.6s}
+.bar-num{width:36px;font-weight:600;color:var(--text)}
+
+/* SETTINGS */
+.settings-grid{display:grid;grid-template-columns:200px 1fr;gap:20px}
+.settings-nav{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:10px;height:fit-content}
+.s-nav-item{padding:9px 12px;border-radius:8px;font-size:14px;cursor:pointer;margin-bottom:2px;color:var(--text2)}
+.s-nav-item.active{background:var(--green-light);color:var(--green);font-weight:600}
+.settings-panel{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:24px}
+.settings-panel h3{font-size:16px;font-weight:700;margin-bottom:18px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.field-group label{display:block;font-size:12px;font-weight:700;margin-bottom:5px;color:var(--text2)}
+.field-group input,.field-group select,.field-group textarea{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none}
+.field-group input:focus,.field-group select:focus{border-color:var(--green)}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--bg);font-size:14px}
+.toggle{width:42px;height:24px;background:var(--border);border-radius:12px;position:relative;cursor:pointer;transition:.2s;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:.2s}
+.toggle.on::after{left:21px}
+
+/* WHATSAPP PREVIEW */
+.wa-phone{background:#e5ddd5;border-radius:16px;padding:16px;max-width:320px;margin:0 auto}
+.wa-header{background:#075e54;color:#fff;padding:10px 14px;border-radius:10px 10px 0 0;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.wa-body{background:#e5ddd5;min-height:280px;padding:10px;border-radius:0 0 10px 10px}
+.wa-msg{max-width:85%;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:6px;line-height:1.5}
+.wa-bot{background:#fff;align-self:flex-start}
+.wa-user{background:#dcf8c6;margin-left:auto}
+.wa-msgs{display:flex;flex-direction:column}
+.wa-time{font-size:10px;color:#999;text-align:right;margin-top:2px}
+
+/* PLAN BADGE */
+.plan-strip{background:linear-gradient(90deg,#1a7a4a,#2ea06b);color:#fff;padding:8px 16px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px}
+
+/* NOTIFICATION DOT */
+.notif{width:8px;height:8px;background:#ef4444;border-radius:50%;flex-shrink:0}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:999;display:none}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:28px;width:440px;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:17px;font-weight:700;margin-bottom:18px}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.btn-cancel{padding:9px 18px;border-radius:8px;border:1.5px solid var(--border);background:transparent;cursor:pointer;font-size:14px}
+.btn-confirm{padding:9px 18px;border-radius:8px;border:none;background:var(--green);color:#fff;cursor:pointer;font-size:14px;font-weight:600}
+
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="icon">+</div>
+      <h1>MediTreat</h1>
+    </div>
+    <div class="login-tabs">
+      <button class="tab-btn active" onclick="setLoginRole('doctor')">Doctor Login</button>
+      <button class="tab-btn" onclick="setLoginRole('staff')">Staff Login</button>
+    </div>
+    <h2>Welcome back</h2>
+    <p>AI-powered dispensary management</p>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="login-email" value="dr.sharma@meditreat.in" placeholder="email@clinic.com"/>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-pass" value="••••••••" placeholder="Password"/>
+    </div>
+    <div class="form-group">
+      <label>Clinic</label>
+      <input type="text" value="Sharma Family Clinic, Delhi" readonly style="background:#f8fafc;color:#64748b"/>
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Sign In</button>
+    <p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:14px">Demo: any credentials work &nbsp;|&nbsp; Plan: <b>Growth</b></p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon" style="font-size:18px">+</div>
+      <span>MediTreat</span>
+    </div>
+    <div class="plan-strip">Growth Plan &nbsp;<span style="opacity:.7;font-weight:400">▸ Upgrade</span></div>
+    <div class="nav-section">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="ic">⊞</span>Dashboard</div>
+    <div class="nav-item" onclick="showPage('queue')"><span class="ic">⏳</span>Live Queue <span class="notif" style="margin-left:auto"></span></div>
+    <div class="nav-item" onclick="showPage('bookings')"><span class="ic">📅</span>Bookings</div>
+    <div class="nav-item" onclick="showPage('patients')"><span class="ic">👤</span>Patients</div>
+    <div class="nav-section">Insights</div>
+    <div class="nav-item" onclick="showPage('analytics')"><span class="ic">📊</span>Analytics</div>
+    <div class="nav-item" onclick="showPage('whatsapp')"><span class="ic">💬</span>WhatsApp Bot</div>
+    <div class="nav-section">Setup</div>
+    <div class="nav-item" onclick="showPage('settings')"><span class="ic">⚙</span>Settings</div>
+    <div class="nav-item" onclick="showPage('billing')"><span class="ic">💳</span>Billing / Plans</div>
+    <div class="sidebar-bottom">
+      <div class="doctor-pill">
+        <div class="avatar">DS</div>
+        <div>
+          <div style="font-size:13px;font-weight:600">Dr. D. Sharma</div>
+          <div style="font-size:11px;color:var(--gray)">Admin &nbsp;·&nbsp; <a onclick="doLogout()" style="cursor:pointer;color:#ef4444">Logout</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <h2 id="page-title">Dashboard</h2>
+      <div id="topbar-date" style="font-size:13px;color:var(--gray)"></div>
+      <div class="badge badge-green" id="clinic-status">● Clinic Open</div>
+      <button class="btn-sm green" onclick="openModal('add-patient-modal')">+ Add Patient</button>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">Today's Patients</div>
+            <div class="stat-val" style="color:var(--green)">24</div>
+            <div class="stat-sub">8 remaining</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Avg Wait Time</div>
+            <div class="stat-val" style="color:var(--amber)">18m</div>
+            <div class="stat-sub">Target: 15m</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Revenue Today</div>
+            <div class="stat-val" style="color:var(--blue)">₹7,200</div>
+            <div class="stat-sub">4 advance paid</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">AI Triage Alerts</div>
+            <div class="stat-val" style="color:var(--red)">2</div>
+            <div class="stat-sub">Urgent cases</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card">
+            <div class="card-title">Today's Queue Snapshot</div>
+            <div id="mini-queue"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Peak Hours (This Week)</div>
+            <div class="chart-bar-wrap" id="peak-chart"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:0">
+          <div class="card-title">AI Daily Summary</div>
+          <div class="ai-box">
+            <b>AI Insight:</b> Today has 24 patients — 18% above Monday average. Common complaints: fever (8), throat infection (5), gastric issues (4). <b>2 urgent triage alerts</b> flagged. Peak hour predicted: <b>11am–1pm</b>. Consider enabling the WhatsApp waitlist for overflow patients.
+          </div>
+        </div>
+      </div>
+
+      <!-- QUEUE PAGE -->
+      <div id="page-queue" class="hidden">
+        <div class="queue-grid">
+          <div class="queue-list">
+            <div class="card-title" style="margin-bottom:10px">Live Queue — <span style="color:var(--green)">8 waiting</span></div>
+            <div id="queue-items"></div>
+          </div>
+          <div class="patient-panel" id="patient-detail">
+            <div class="pp-avatar">RS</div>
+            <div class="pp-name">Rahul Sharma</div>
+            <div class="pp-sub">Token #3 &nbsp;·&nbsp; <span class="badge badge-red">Urgent</span></div>
+            <div class="pp-row"><span>Age</span><span>34 yrs, Male</span></div>
+            <div class="pp-row"><span>Phone</span><span>+91 98765 43210</span></div>
+            <div class="pp-row"><span>Visits</span><span>7 total</span></div>
+            <div class="pp-row"><span>Last visit</span><span>Apr 15, 2025</span></div>
+            <div class="pp-row"><span>Allergies</span><span>Penicillin</span></div>
+            <div class="ai-box">
+              <b>AI Summary:</b> Recurring visits for fever & cough. Last rx: Azithromycin 500mg. Reports chest pain today — flagged as <b>urgent</b>. Check BP before consultation.
+            </div>
+            <textarea class="note-area" placeholder="Add consultation notes..."></textarea>
+            <button class="btn-block btn-done" onclick="markDone()">✓ Mark as Done</button>
+            <button class="btn-block btn-msg" onclick="alert('WhatsApp message sent!')">💬 Send WhatsApp Message</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOOKINGS PAGE -->
+      <div id="page-bookings" class="hidden">
+        <div class="card">
+          <div class="card-title">Advance Bookings — May 2025</div>
+          <div style="display:flex;gap:10px;margin-bottom:16px">
+            <button class="btn-sm green" onclick="openModal('add-booking-modal')">+ New Booking</button>
+            <button class="btn-sm">Send Reminders (3)</button>
+          </div>
+          <div class="booking-grid" id="bookings-list"></div>
+        </div>
+      </div>
+
+      <!-- PATIENTS PAGE -->
+      <div id="page-patients" class="hidden">
+        <div class="card">
+          <div class="card-title">All Patients</div>
+          <div style="display:flex;gap:10px;margin-bottom:16px">
+            <input placeholder="Search by name or phone..." style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;width:260px;outline:none"/>
+            <button class="btn-sm green">+ Add Patient</button>
+            <button class="btn-sm">Export CSV</button>
+          </div>
+          <table class="patients-table">
+            <thead><tr><th>Name</th><th>Age/Gender</th><th>Phone</th><th>Last Visit</th><th>Visits</th><th>Status</th></tr></thead>
+            <tbody id="patients-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ANALYTICS -->
+      <div id="page-analytics" class="hidden">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">This Month</div><div class="stat-val" style="color:var(--green)">312</div><div class="stat-sub">patients</div></div>
+          <div class="stat-card"><div class="stat-label">Monthly Revenue</div><div class="stat-val" style="color:var(--blue)">₹93,600</div><div class="stat-sub">+12% vs last mo</div></div>
+          <div class="stat-card"><div class="stat-label">Avg Consultation</div><div class="stat-val">9.4m</div><div class="stat-sub">down from 11m</div></div>
+          <div class="stat-card"><div class="stat-label">Patient Retention</div><div class="stat-val" style="color:var(--green)">74%</div><div class="stat-sub">returning patients</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card">
+            <div class="card-title">Top Ailments This Month</div>
+            <div class="chart-bar-wrap" id="ailment-chart"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Daily Footfall (Last 7 Days)</div>
+            <div class="chart-bar-wrap" id="footfall-chart"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Revenue Trend (Last 6 Months)</div>
+          <div class="chart-bar-wrap" id="revenue-chart"></div>
+        </div>
+      </div>
+
+      <!-- WHATSAPP BOT -->
+      <div id="page-whatsapp" class="hidden">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div class="card">
+            <div class="card-title">Bot Configuration</div>
+            <div class="toggle-row"><span>Bot Active</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="toggle-row"><span>Auto-reply FAQ</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="toggle-row"><span>AI Triage</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="toggle-row"><span>Appointment Reminders</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="toggle-row"><span>Follow-up (3 days)</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+            <div class="toggle-row"><span>Hindi support</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+            <div style="margin-top:16px">
+              <div class="field-group" style="margin-bottom:10px"><label>Greeting Message</label><textarea style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;resize:vertical;min-height:60px">Namaste! Welcome to Sharma Family Clinic. I'm MediTreat AI. How can I help you today?</textarea></div>
+              <div class="field-group"><label>WhatsApp Number (Business)</label><input value="+91 98100 XXXXX" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px"/></div>
+              <button class="btn-block btn-done" style="margin-top:12px">Save Bot Settings</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Live Chat Preview</div>
+            <div class="wa-phone">
+              <div class="wa-header">+ Sharma Family Clinic · MediTreat</div>
+              <div class="wa-body">
+                <div class="wa-msgs" id="wa-msgs">
+                  <div class="wa-msg wa-bot">Namaste! Welcome to Sharma Family Clinic. I'm MediTreat AI. How can I help?<br>1. Book appointment<br>2. Check queue status<br>3. Speak to doctor<div class="wa-time">10:02 AM</div></div>
+                  <div class="wa-msg wa-user">1<div class="wa-time">10:03 AM</div></div>
+                  <div class="wa-msg wa-bot">Please share your name and symptoms to book an appointment.<div class="wa-time">10:03 AM</div></div>
+                  <div class="wa-msg wa-user">Rajesh Kumar, fever and headache<div class="wa-time">10:04 AM</div></div>
+                  <div class="wa-msg wa-bot">Thank you Rajesh! Available slots today:<br>11:30 AM — ₹300 advance<br>2:00 PM — ₹300 advance<br>Reply with slot choice.<div class="wa-time">10:04 AM</div></div>
+                </div>
+                <div style="display:flex;gap:6px;margin-top:10px">
+                  <input id="wa-input" placeholder="Simulate patient message..." style="flex:1;padding:7px 10px;border-radius:20px;border:1px solid #ccc;font-size:13px;outline:none"/>
+                  <button onclick="sendWAMsg()" style="padding:7px 14px;background:#25d366;color:#fff;border:none;border-radius:20px;font-size:13px;cursor:pointer">Send</button>
+                </div>
+              </div>
+            </div>
+            <p style="text-align:center;font-size:12px;color:var(--gray);margin-top:10px">This simulates patient-side WhatsApp. AI replies via Claude API.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div id="page-settings" class="hidden">
+        <div class="settings-grid">
+          <div class="settings-nav">
+            <div class="s-nav-item active" onclick="setSettingsTab('clinic')">Clinic Profile</div>
+            <div class="s-nav-item" onclick="setSettingsTab('slots')">Slot Settings</div>
+            <div class="s-nav-item" onclick="setSettingsTab('fees')">Fees & Payments</div>
+            <div class="s-nav-item" onclick="setSettingsTab('staff')">Staff & Roles</div>
+            <div class="s-nav-item" onclick="setSettingsTab('notif')">Notifications</div>
+          </div>
+          <div class="settings-panel">
+            <div id="settings-clinic">
+              <h3>Clinic Profile</h3>
+              <div class="field-row">
+                <div class="field-group"><label>Clinic Name</label><input value="Sharma Family Clinic"/></div>
+                <div class="field-group"><label>Doctor Name</label><input value="Dr. Deepak Sharma"/></div>
+              </div>
+              <div class="field-row">
+                <div class="field-group"><label>Specialization</label><input value="General Physician"/></div>
+                <div class="field-group"><label>Registration No.</label><input value="MCI-2019-DL-XXXXX"/></div>
+              </div>
+              <div class="field-row">
+                <div class="field-group"><label>Phone</label><input value="+91 98100 XXXXX"/></div>
+                <div class="field-group"><label>Email</label><input value="dr.sharma@meditreat.in"/></div>
+              </div>
+              <div class="field-group" style="margin-bottom:14px"><label>Address</label><input value="B-14, Lajpat Nagar, New Delhi – 110024"/></div>
+              <div class="field-row">
+                <div class="field-group"><label>Opening Time</label><input type="time" value="09:00"/></div>
+                <div class="field-group"><label>Closing Time</label><input type="time" value="20:00"/></div>
+              </div>
+              <button class="btn-block btn-done" style="margin-top:8px">Save Profile</button>
+            </div>
+            <div id="settings-slots" class="hidden">
+              <h3>Slot & Queue Settings</h3>
+              <div class="field-row">
+                <div class="field-group"><label>Minutes per patient</label><input type="number" value="10"/></div>
+                <div class="field-group"><label>Max patients/day</label><input type="number" value="40"/></div>
+              </div>
+              <div class="field-row">
+                <div class="field-group"><label>Advance booking (days)</label><input type="number" value="7"/></div>
+                <div class="field-group"><label>Buffer between slots (min)</label><input type="number" value="5"/></div>
+              </div>
+              <div class="toggle-row"><span>Sunday closed</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <div class="toggle-row"><span>Allow walk-in queue</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <button class="btn-block btn-done" style="margin-top:14px">Save Slot Settings</button>
+            </div>
+            <div id="settings-fees" class="hidden">
+              <h3>Fees & Payments</h3>
+              <div class="field-row">
+                <div class="field-group"><label>Consultation Fee (₹)</label><input type="number" value="300"/></div>
+                <div class="field-group"><label>Advance Booking Fee (₹)</label><input type="number" value="100"/></div>
+              </div>
+              <div class="field-group" style="margin-bottom:14px"><label>UPI / Razorpay Key</label><input value="rzp_live_XXXXXXXXXXXXXXXXXX" type="password"/></div>
+              <div class="toggle-row"><span>Enable UPI payments</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <div class="toggle-row"><span>Send payment receipt on WhatsApp</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <button class="btn-block btn-done" style="margin-top:14px">Save Payment Settings</button>
+            </div>
+            <div id="settings-staff" class="hidden">
+              <h3>Staff & Roles</h3>
+              <table class="patients-table" style="margin-bottom:14px">
+                <thead><tr><th>Name</th><th>Role</th><th>Access</th><th></th></tr></thead>
+                <tbody>
+                  <tr><td>Dr. Deepak Sharma</td><td><span class="badge badge-green">Doctor</span></td><td>Full</td><td><button class="btn-sm">Edit</button></td></tr>
+                  <tr><td>Meena Devi</td><td><span class="badge badge-blue">Receptionist</span></td><td>Queue only</td><td><button class="btn-sm">Edit</button></td></tr>
+                </tbody>
+              </table>
+              <button class="btn-sm green">+ Invite Staff Member</button>
+            </div>
+            <div id="settings-notif" class="hidden">
+              <h3>Notifications</h3>
+              <div class="toggle-row"><span>Appointment reminder (1 hr before)</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <div class="toggle-row"><span>Queue position updates</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <div class="toggle-row"><span>Post-visit follow-up (3 days)</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+              <div class="toggle-row"><span>Payment confirmation</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <div class="toggle-row"><span>Urgent triage SMS to doctor</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <button class="btn-block btn-done" style="margin-top:14px">Save Notifications</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BILLING -->
+      <div id="page-billing" class="hidden">
+        <div class="card">
+          <div class="card-title">Current Plan</div>
+          <div style="display:flex;align-items:center;gap:16px;padding:16px;background:var(--green-light);border-radius:10px;margin-bottom:16px">
+            <div>
+              <div style="font-size:18px;font-weight:700;color:var(--green)">Growth Plan</div>
+              <div style="font-size:13px;color:var(--gray)">₹2,499 / month · Renews Jun 1, 2025</div>
+            </div>
+            <div style="margin-left:auto">
+              <span class="badge badge-green">Active</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+            <div class="booking-card">
+              <div class="bname">Starter</div>
+              <div style="font-size:22px;font-weight:700;margin:8px 0">₹999<span style="font-size:13px;font-weight:400">/mo</span></div>
+              <div style="font-size:12px;color:var(--gray);line-height:1.7">WhatsApp bot<br>Basic queue<br>100 patients/mo<br>Email support</div>
+              <button class="btn-sm" style="margin-top:12px;width:100%">Downgrade</button>
+            </div>
+            <div class="booking-card" style="border:2px solid var(--green)">
+              <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:4px">CURRENT PLAN</div>
+              <div class="bname">Growth</div>
+              <div style="font-size:22px;font-weight:700;margin:8px 0">₹2,499<span style="font-size:13px;font-weight:400">/mo</span></div>
+              <div style="font-size:12px;color:var(--gray);line-height:1.7">AI features + triage<br>Prescriptions<br>Analytics<br>500 patients/mo</div>
+              <button class="btn-sm green" style="margin-top:12px;width:100%">Current</button>
+            </div>
+            <div class="booking-card">
+              <div class="bname">Pro</div>
+              <div style="font-size:22px;font-weight:700;margin:8px 0">₹4,999<span style="font-size:13px;font-weight:400">/mo</span></div>
+              <div style="font-size:12px;color:var(--gray);line-height:1.7">Multi-doctor<br>Custom branding<br>Unlimited patients<br>Priority support</div>
+              <button class="btn-sm green" style="margin-top:12px;width:100%">Upgrade</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ADD PATIENT MODAL -->
+<div class="modal-overlay" id="add-patient-modal">
+  <div class="modal">
+    <h3>+ Add Patient to Queue</h3>
+    <div class="field-row">
+      <div class="field-group"><label>Full Name</label><input placeholder="Patient name"/></div>
+      <div class="field-group"><label>Phone (WhatsApp)</label><input placeholder="+91 XXXXX XXXXX"/></div>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label>Age</label><input type="number" placeholder="Age"/></div>
+      <div class="field-group"><label>Gender</label><select><option>Male</option><option>Female</option><option>Other</option></select></div>
+    </div>
+    <div class="field-group" style="margin-bottom:14px"><label>Chief Complaint</label><input placeholder="e.g. Fever, headache, cough"/></div>
+    <div class="field-row">
+      <div class="field-group"><label>Triage</label><select><option>Normal</option><option>Urgent</option><option>Emergency</option></select></div>
+      <div class="field-group"><label>Payment</label><select><option>Pending</option><option>Paid (Cash)</option><option>Paid (UPI)</option></select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('add-patient-modal')">Cancel</button>
+      <button class="btn-confirm" onclick="closeModal('add-patient-modal');alert('Patient added to queue and WhatsApp token sent!')">Add to Queue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD BOOKING MODAL -->
+<div class="modal-overlay" id="add-booking-modal">
+  <div class="modal">
+    <h3>New Advance Booking</h3>
+    <div class="field-row">
+      <div class="field-group"><label>Patient Name</label><input placeholder="Name"/></div>
+      <div class="field-group"><label>Phone</label><input placeholder="+91"/></div>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label>Date</label><input type="date"/></div>
+      <div class="field-group"><label>Time Slot</label><select><option>09:00 AM</option><option>10:00 AM</option><option>11:00 AM</option><option>12:00 PM</option><option>02:00 PM</option><option>04:00 PM</option></select></div>
+    </div>
+    <div class="field-group" style="margin-bottom:14px"><label>Symptoms / Reason</label><input placeholder="Brief reason for visit"/></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('add-booking-modal')">Cancel</button>
+      <button class="btn-confirm" onclick="closeModal('add-booking-modal');alert('Booking confirmed! Payment link sent on WhatsApp.')">Confirm & Send Payment Link</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const pages=['dashboard','queue','bookings','patients','analytics','whatsapp','settings','billing'];
+const titles={dashboard:'Dashboard',queue:'Live Queue',bookings:'Advance Bookings',patients:'Patient Records',analytics:'Analytics',whatsapp:'WhatsApp Bot',settings:'Settings',billing:'Billing & Plans'};
+
+const queueData=[
+  {num:1,name:'Priya Mehta',age:'28F',complaint:'Fever + cold',triage:'normal',status:'done'},
+  {num:2,name:'Arun Gupta',age:'45M',complaint:'Gastric pain',triage:'normal',status:'done'},
+  {num:3,name:'Rahul Sharma',age:'34M',complaint:'Chest pain + fever',triage:'urgent',status:'active'},
+  {num:4,name:'Sunita Rao',age:'52F',complaint:'Knee pain',triage:'normal',status:'waiting'},
+  {num:5,name:'Mohan Das',age:'67M',complaint:'BP check',triage:'normal',status:'waiting'},
+  {num:6,name:'Kavya Singh',age:'8F',complaint:'Throat infection',triage:'normal',status:'waiting'},
+  {num:7,name:'Deepak Joshi',age:'39M',complaint:'Headache',triage:'normal',status:'waiting'},
+  {num:8,name:'Ritu Bhatia',age:'31F',complaint:'Skin rash',triage:'normal',status:'waiting'},
+];
+
+const bookingsData=[
+  {name:'Anjali Kapoor',date:'May 3',time:'10:00 AM',complaint:'Routine checkup',paid:true},
+  {name:'Vikram Nair',date:'May 3',time:'11:30 AM',complaint:'Fever follow-up',paid:true},
+  {name:'Neha Soni',date:'May 4',time:'09:00 AM',complaint:'Skin allergy',paid:false},
+  {name:'Ramesh Yadav',date:'May 4',time:'02:00 PM',complaint:'Diabetes review',paid:true},
+  {name:'Pooja Desai',date:'May 5',time:'10:30 AM',complaint:'Cold & cough',paid:false},
+  {name:'Arjun Malhotra',date:'May 6',time:'04:00 PM',complaint:'Back pain',paid:false},
+];
+
+const patientsData=[
+  {name:'Priya Mehta',age:'28',gender:'F',phone:'+91 91234 56789',last:'May 2',visits:3,status:'Active'},
+  {name:'Rahul Sharma',age:'34',gender:'M',phone:'+91 98765 43210',last:'May 2',visits:7,status:'Active'},
+  {name:'Sunita Rao',age:'52',gender:'F',phone:'+91 87654 32109',last:'Apr 28',visits:12,status:'Regular'},
+  {name:'Vikram Nair',age:'41',gender:'M',phone:'+91 76543 21098',last:'Apr 15',visits:5,status:'Active'},
+  {name:'Anjali Kapoor',age:'35',gender:'F',phone:'+91 65432 10987',last:'Mar 30',visits:2,status:'New'},
+  {name:'Mohan Das',age:'67',gender:'M',phone:'+91 54321 09876',last:'May 1',visits:18,status:'Regular'},
+];
+
+function showPage(p){
+  pages.forEach(x=>{
+    const el=document.getElementById('page-'+x);
+    if(el) el.classList.add('hidden');
+  });
+  document.getElementById('page-'+p).classList.remove('hidden');
+  document.getElementById('page-title').textContent=titles[p];
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.textContent.toLowerCase().includes(titles[p].toLowerCase().slice(0,5))) n.classList.add('active');
+  });
+}
+
+function buildQueue(){
+  const c=document.getElementById('queue-items');
+  if(!c) return;
+  c.innerHTML='';
+  queueData.forEach(p=>{
+    const d=document.createElement('div');
+    d.className='q-item'+(p.status==='active'?' active-consult':'');
+    const nb=p.status==='done'?'#22c55e':p.status==='active'?'#1a7a4a':'';
+    const nc=p.status==='done'||p.status==='active'?'#fff':'';
+    const nBg=p.status==='waiting'?'var(--border)':'';
+    d.innerHTML=`<div class="q-num${p.status==='waiting'?' pending':''}" style="${nb?'background:'+nb+';':nBg?'background:'+nBg+';':''}${nc?'color:'+nc+';':''}">${p.status==='done'?'✓':p.num}</div>
+    <div class="q-info"><div class="q-name">${p.name} <span style="font-size:12px;color:var(--gray)">${p.age}</span>${p.triage==='urgent'?'<span class="badge badge-red" style="margin-left:6px;font-size:11px">Urgent</span>':''}</div>
+    <div class="q-detail">${p.complaint}</div></div>
+    <div class="q-actions">
+    ${p.status==='waiting'?'<button class="btn-sm green" onclick="callNext(this)">Call</button>':''}
+    ${p.status==='active'?'<button class="btn-sm green">Done</button>':''}
+    <button class="btn-sm">Note</button>
+    </div>`;
+    c.appendChild(d);
+  });
+}
+
+function buildMiniQueue(){
+  const c=document.getElementById('mini-queue');
+  if(!c) return;
+  c.innerHTML='';
+  queueData.slice(0,5).forEach(p=>{
+    const d=document.createElement('div');
+    d.style.cssText='display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--bg)';
+    const color=p.status==='done'?'#22c55e':p.status==='active'?'var(--green)':'var(--border)';
+    d.innerHTML=`<div style="width:24px;height:24px;border-radius:50%;background:${color};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">${p.status==='done'?'✓':p.num}</div>
+    <span style="font-size:13px;flex:1">${p.name}</span>
+    <span class="badge ${p.status==='done'?'badge-green':p.status==='active'?'badge-green':'badge-amber'}" style="font-size:11px">${p.status==='done'?'Done':p.status==='active'?'In progress':'Waiting'}</span>`;
+    c.appendChild(d);
+  });
+}
+
+function buildBookings(){
+  const c=document.getElementById('bookings-list');
+  if(!c) return;
+  c.innerHTML='';
+  bookingsData.forEach(b=>{
+    c.innerHTML+=`<div class="booking-card">
+    <div class="bname">${b.name}</div>
+    <div class="btime">${b.date} &nbsp;·&nbsp; ${b.time}</div>
+    <div style="font-size:12px;color:var(--gray)">${b.complaint}</div>
+    <span class="payment-pill ${b.paid?'paid':'pending-pay'}">${b.paid?'✓ Paid':'⏳ Pending'}</span>
+    <div style="margin-top:8px;display:flex;gap:6px">
+    <button class="btn-sm green" style="font-size:11px">Add to Queue</button>
+    <button class="btn-sm" style="font-size:11px">Message</button>
+    </div></div>`;
+  });
+}
+
+function buildPatients(){
+  const tb=document.getElementById('patients-tbody');
+  if(!tb) return;
+  tb.innerHTML='';
+  patientsData.forEach(p=>{
+    tb.innerHTML+=`<tr>
+    <td><b>${p.name}</b></td>
+    <td>${p.age} / ${p.gender}</td>
+    <td style="color:var(--blue)">${p.phone}</td>
+    <td>${p.last}</td>
+    <td>${p.visits}</td>
+    <td><span class="badge ${p.status==='New'?'badge-amber':p.status==='Regular'?'badge-green':'badge-blue'}">${p.status}</span></td>
+    </tr>`;
+  });
+}
+
+function buildPeakChart(){
+  const c=document.getElementById('peak-chart');
+  if(!c) return;
+  const hours=[{l:'9-10am',v:8},{l:'10-11am',v:14},{l:'11am-1pm',v:28},{l:'1-3pm',v:16},{l:'3-5pm',v:20},{l:'5-7pm',v:22},{l:'7-8pm',v:10}];
+  const max=28;
+  c.innerHTML=hours.map(h=>`<div class="bar-row"><div class="bar-label" style="font-size:11px">${h.l}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(h.v/max*100)}%"></div></div><div class="bar-num">${h.v}</div></div>`).join('');
+}
+
+function buildAnalytics(){
+  const ailments=[{l:'Fever',v:48},{l:'Throat',v:32},{l:'Gastric',v:28},{l:'Cold',v:24},{l:'BP check',v:20},{l:'Skin',v:16}];
+  const footfall=[{l:'Mon',v:18},{l:'Tue',v:22},{l:'Wed',v:26},{l:'Thu',v:31},{l:'Fri',v:28},{l:'Sat',v:38},{l:'Sun',v:0}];
+  const revenue=[{l:'Dec',v:62},{l:'Jan',v:71},{l:'Feb',v:68},{l:'Mar',v:84},{l:'Apr',v:89},{l:'May',v:94}];
+  const max1=48,max2=38,max3=94;
+  const ac=document.getElementById('ailment-chart');
+  const fc=document.getElementById('footfall-chart');
+  const rc=document.getElementById('revenue-chart');
+  if(ac) ac.innerHTML=ailments.map(h=>`<div class="bar-row"><div class="bar-label">${h.l}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(h.v/max1*100)}%"></div></div><div class="bar-num">${h.v}</div></div>`).join('');
+  if(fc) fc.innerHTML=footfall.map(h=>`<div class="bar-row"><div class="bar-label">${h.l}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(h.v/max2*100)}%;background:${h.l==='Sun'?'var(--border)':'var(--green)'}"></div></div><div class="bar-num">${h.v}</div></div>`).join('');
+  if(rc) rc.innerHTML=revenue.map(h=>`<div class="bar-row"><div class="bar-label">${h.l}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(h.v/max3*100)}%;background:var(--blue)"></div></div><div class="bar-num" style="font-size:11px">₹${h.v}k</div></div>`).join('');
+}
+
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+window.onclick=e=>{if(e.target.classList.contains('modal-overlay')) e.target.classList.remove('open')};
+
+function markDone(){alert('Patient marked as done. Summary sent on WhatsApp.')}
+function callNext(btn){btn.textContent='Called';btn.disabled=true}
+
+let loginRole='doctor';
+function setLoginRole(r){
+  loginRole=r;
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(r==='doctor'&&i===0)||(r==='staff'&&i===1)));
+}
+
+function doLogin(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').classList.add('visible');
+  buildQueue();buildMiniQueue();buildBookings();buildPatients();buildPeakChart();buildAnalytics();
+  document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+
+function doLogout(){
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('login-screen').style.display='flex';
+}
+
+function setSettingsTab(t){
+  ['clinic','slots','fees','staff','notif'].forEach(x=>{
+    document.getElementById('settings-'+x).classList.add('hidden');
+  });
+  document.getElementById('settings-'+t).classList.remove('hidden');
+  document.querySelectorAll('.s-nav-item').forEach(n=>n.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+const waReplies={
+  '11:30':'Great choice! Here is your payment link for ₹100 advance: pay.meditreat.in/xyz123 . Your token #9 is confirmed for 11:30 AM. We will send a reminder 1 hour before.',
+  '2:00':'Confirmed! Payment link: pay.meditreat.in/abc456 . Token #10 for 2:00 PM. See you soon!',
+  'hello':'Hello! I am MediTreat AI assistant for Sharma Clinic. Type 1 to book, 2 for queue status, 3 to speak to doctor.',
+  'status':'You are currently #7 in the queue. Estimated wait: ~35 minutes. We will notify you when your turn is near.',
+  'cancel':'Your appointment has been cancelled. Refund of ₹100 will be processed in 3-5 days. Would you like to rebook?',
+};
+function sendWAMsg(){
+  const inp=document.getElementById('wa-input');
+  const msgs=document.getElementById('wa-msgs');
+  const txt=inp.value.trim();
+  if(!txt) return;
+  const t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  msgs.innerHTML+=`<div class="wa-msg wa-user">${txt}<div class="wa-time">${t}</div></div>`;
+  inp.value='';
+  setTimeout(()=>{
+    const lk=Object.keys(waReplies).find(k=>txt.toLowerCase().includes(k));
+    const reply=lk?waReplies[lk]:'Thank you for your message. Our AI is processing your request. Please wait a moment...';
+    msgs.innerHTML+=`<div class="wa-msg wa-bot">${reply}<div class="wa-time">${new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div></div>`;
+    msgs.parentElement.scrollTop=msgs.parentElement.scrollHeight;
+  },800);
+}
+</script>
+</body>
+</html>
